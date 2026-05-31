@@ -1,0 +1,288 @@
+cat << 'EOF' > index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eccentric Anomaly Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: #86868b;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 600px;
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 650px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        canvas {
+            background-color: #fafafa;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .controls {
+            width: 100%;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .label-container {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            font-size: 0.95rem;
+            align-items: center;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #0071e3;
+            cursor: pointer;
+        }
+
+        .stats {
+            width: 100%;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #d2d2d7;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .stat-box {
+            background-color: #f5f5f7;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .stat-box span {
+            font-weight: 600;
+            color: #0071e3;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Eccentric Anomaly Geometric Model</h1>
+    <p class="subtitle">Visualizing the mathematical bridge between an ellipse and its auxiliary circle where \(x = a \cos E\) and \(y = b \sin E\)</p>
+
+    <div class="container">
+        <canvas id="orbitCanvas" width="600" height="450"></canvas>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="label-container">
+                    <label for="eccentricity">Eccentricity (\(e\export_label\)):</label>
+                    <span id="eVal">0.60</span>
+                </div>
+                <input type="range" id="eccentricity" min="0.0" max="0.95" step="0.01" value="0.60">
+            </div>
+
+            <div class="control-group">
+                <div class="label-container">
+                    <label for="anomaly">Eccentric Anomaly (\(E\)):</label>
+                    <span id="EVal">60°</span>
+                </div>
+                <input type="range" id="anomaly" min="0" max="360" step="1" value="60">
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">Semi-major Axis (\(a\)): <span>180 px</span></div>
+            <div class="stat-box">Semi-minor Axis (\(b\)): <span id="statB">144.0 px</span></div>
+            <div class="stat-box">\(P'\) (Circle Coords): <span id="statPPrime">(90.0, 155.9)</span></div>
+            <div class="stat-box">\(P\) (Ellipse Coords): <span id="statP">(90.0, 124.7)</span></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('orbitCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Sliders and Value Displays
+        const eSlider = document.getElementById('eccentricity');
+        const ESlider = document.getElementById('anomaly');
+        const eVal = document.getElementById('eVal');
+        const EVal = document.getElementById('EVal');
+        
+        const statB = document.getElementById('statB');
+        const statPPrime = document.getElementById('statPPrime');
+        const statP = document.getElementById('statP');
+
+        // Fixed parameter
+        const a = 180; 
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        function draw() {
+            const e = parseFloat(eSlider.value);
+            const E_deg = parseInt(ESlider.value);
+            const E_rad = (E_deg * Math.PI) / 180;
+
+            // Update label readouts
+            eVal.textContent = e.toFixed(2);
+            EVal.textContent = E_deg + '°';
+
+            // Calculate semi-minor axis b
+            const b = a * Math.sqrt(1 - e * e);
+            statB.textContent = b.toFixed(1) + ' px';
+
+            // Coordinates relative to center
+            const x = a * Math.cos(E_rad);
+            const yCircle = a * Math.sin(E_rad);
+            const yEllipse = b * Math.sin(E_rad);
+
+            // Update stats panel
+            statPPrime.textContent = `(${x.toFixed(1)}, ${yCircle.toFixed(1)})`;
+            statP.textContent = `(${x.toFixed(1)}, ${yEllipse.toFixed(1)})`;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Coordinate Axes
+            ctx.strokeStyle = '#e5e5ea';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY); // X-axis
+            ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height); // Y-axis
+            ctx.stroke();
+
+            // 2. Draw Auxiliary Circle (Radius = a)
+            ctx.strokeStyle = '#8e8e93';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]); // Dashed line style
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, a, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // 3. Draw Ellipse
+            ctx.strokeStyle = '#1d1d1f';
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([]); // Reset to solid line
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, a, b, 0, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // 4. Mark Focus Point (ae, 0)
+            const focusX = centerX + (a * e);
+            ctx.fillStyle = '#ff453a';
+            ctx.beginPath();
+            ctx.arc(focusX, centerY, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            // Focus Label Text
+            ctx.fillStyle = '#ff453a';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('Focus (Star)', focusX - 30, centerY + 20);
+
+            // Canvas coordinates (Invert Y because canvas Y points downwards)
+            const cx = centerX + x;
+            const cyCircle = centerY - yCircle;
+            const cyEllipse = centerY - yEllipse;
+
+            // 5. Draw vertical tracking line from P' down to X-axis
+            ctx.strokeStyle = '#0071e3';
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(cx, cyCircle);
+            ctx.lineTo(cx, centerY);
+            ctx.stroke();
+
+            // 6. Draw Vector Line from Center to P' on the circle
+            ctx.strokeStyle = '#34c759';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(cx, cyCircle);
+            ctx.stroke();
+
+            // 7. Draw Angle E arc indicator
+            if (E_deg > 0) {
+                ctx.strokeStyle = '#34c759';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                // Canvas arcs are drawn clockwise, so we sweep from 0 to -E_rad
+                ctx.arc(centerX, centerY, 30, 0, -E_rad, true);
+                ctx.stroke();
+                
+                // Label for angle E near the arc center
+                ctx.fillStyle = '#34c759';
+                ctx.font = 'italic 14px sans-serif';
+                ctx.fillText('E', centerX + 35 * Math.cos(-E_rad/2), centerY - 35 * Math.sin(-E_rad/2));
+            }
+
+            // 8. Draw Point P' (On Auxiliary Circle)
+            ctx.fillStyle = '#34c759';
+            ctx.beginPath();
+            ctx.arc(cx, cyCircle, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#1d1d1f';
+            ctx.fillText("P' (Circle)", cx + 8, cyCircle - 5);
+
+            // 9. Draw Point P (Actual Object on Ellipse)
+            ctx.fillStyle = '#0071e3';
+            ctx.beginPath();
+            ctx.arc(cx, cyEllipse, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#0071e3';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText('P (Planet)', cx + 10, cyEllipse + 4);
+        }
+
+        // Event listeners to handle real-time modifications
+        eSlider.addEventListener('input', draw);
+        ESlider.addEventListener('input', draw);
+
+        // Initial launch render
+        draw();
+    </script>
+</body>
+</html>
+EOF
