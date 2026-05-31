@@ -1,4 +1,3 @@
-cat << 'EOF' > index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,8 +8,8 @@ cat << 'EOF' > index.html
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f5f5f7;
-            color: #1d1d1f;
+            background-color: #1c1c1e; /* Dark mode background */
+            color: #f5f5f7; /* Light text for dark mode */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -22,10 +21,11 @@ cat << 'EOF' > index.html
             font-size: 1.8rem;
             margin-bottom: 5px;
             text-align: center;
+            color: #ffffff;
         }
 
         p.subtitle {
-            color: #86868b;
+            color: #8e8e93; /* Subtle gray for dark mode subheadings */
             margin-top: 0;
             margin-bottom: 20px;
             text-align: center;
@@ -35,9 +35,9 @@ cat << 'EOF' > index.html
         }
 
         .container {
-            background-color: #ffffff;
+            background-color: #2c2c2e; /* Dark surface container background */
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -48,8 +48,8 @@ cat << 'EOF' > index.html
         }
 
         canvas {
-            background-color: #fafafa;
-            border: 1px solid #d2d2d7;
+            background-color: #121212; /* Rich dark background for the diagram */
+            border: 1px solid #3a3a3c;
             border-radius: 8px;
             max-width: 100%;
             height: auto;
@@ -66,7 +66,7 @@ cat << 'EOF' > index.html
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
 
         .label-container {
@@ -75,19 +75,23 @@ cat << 'EOF' > index.html
             font-weight: 500;
             font-size: 0.95rem;
             align-items: center;
+            color: #f5f5f7;
         }
 
         input[type="range"] {
             width: 100%;
-            accent-color: #0071e3;
+            accent-color: #0a84ff; /* High-contrast dark mode blue accent */
             cursor: pointer;
+            background-color: #3a3a3c;
+            height: 6px;
+            border-radius: 3px;
         }
 
         .stats {
             width: 100%;
             margin-top: 20px;
             padding-top: 15px;
-            border-top: 1px solid #d2d2d7;
+            border-top: 1px solid #3a3a3c;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
@@ -95,14 +99,29 @@ cat << 'EOF' > index.html
         }
 
         .stat-box {
-            background-color: #f5f5f7;
+            background-color: #1c1c1e;
             padding: 8px 12px;
             border-radius: 6px;
+            border: 1px solid #3a3a3c;
+            color: #e5e5ea;
         }
 
         .stat-box span {
             font-weight: 600;
-            color: #0071e3;
+            color: #0a84ff; /* Electric blue readout values */
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 0.85rem;
+            color: #8e8e93;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+        
+        .footer span {
+            color: #0a84ff;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -117,7 +136,7 @@ cat << 'EOF' > index.html
         <div class="controls">
             <div class="control-group">
                 <div class="label-container">
-                    <label for="eccentricity">Eccentricity (\(e\export_label\)):</label>
+                    <label for="eccentricity">Eccentricity (\(e\)):</label>
                     <span id="eVal">0.60</span>
                 </div>
                 <input type="range" id="eccentricity" min="0.0" max="0.95" step="0.01" value="0.60">
@@ -140,6 +159,8 @@ cat << 'EOF' > index.html
         </div>
     </div>
 
+    <div class="footer">Made by <span>Rajarshi Das Gupta</span></div>
+
     <script>
         const canvas = document.getElementById('orbitCanvas');
         const ctx = canvas.getContext('2d');
@@ -154,7 +175,7 @@ cat << 'EOF' > index.html
         const statPPrime = document.getElementById('statPPrime');
         const statP = document.getElementById('statP');
 
-        // Fixed parameter
+        // Fixed spatial coordinate bounds
         const a = 180; 
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
@@ -164,7 +185,7 @@ cat << 'EOF' > index.html
             const E_deg = parseInt(ESlider.value);
             const E_rad = (E_deg * Math.PI) / 180;
 
-            // Update label readouts
+            // Update label readouts instantly
             eVal.textContent = e.toFixed(2);
             EVal.textContent = E_deg + '°';
 
@@ -172,61 +193,61 @@ cat << 'EOF' > index.html
             const b = a * Math.sqrt(1 - e * e);
             statB.textContent = b.toFixed(1) + ' px';
 
-            // Coordinates relative to center
+            // Coordinates relative to center focus
             const x = a * Math.cos(E_rad);
             const yCircle = a * Math.sin(E_rad);
             const yEllipse = b * Math.sin(E_rad);
 
-            // Update stats panel
+            // Update stats layout readings
             statPPrime.textContent = `(${x.toFixed(1)}, ${yCircle.toFixed(1)})`;
             statP.textContent = `(${x.toFixed(1)}, ${yEllipse.toFixed(1)})`;
 
-            // Clear canvas
+            // Reset canvas frame
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Draw Coordinate Axes
-            ctx.strokeStyle = '#e5e5ea';
+            // 1. Draw Axis Crosshairs (Dark Theme Compliant muted color)
+            ctx.strokeStyle = '#3a3a3c';
             ctx.lineWidth = 1;
             ctx.setLineDash([]);
             ctx.beginPath();
-            ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY); // X-axis
-            ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height); // Y-axis
+            ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY); 
+            ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height); 
             ctx.stroke();
 
-            // 2. Draw Auxiliary Circle (Radius = a)
+            // 2. Draw Auxiliary Reference Circle (Radius = a)
             ctx.strokeStyle = '#8e8e93';
             ctx.lineWidth = 1.5;
-            ctx.setLineDash([4, 4]); // Dashed line style
+            ctx.setLineDash([4, 4]); 
             ctx.beginPath();
             ctx.arc(centerX, centerY, a, 0, 2 * Math.PI);
             ctx.stroke();
 
-            // 3. Draw Ellipse
-            ctx.strokeStyle = '#1d1d1f';
+            // 3. Draw Keplerian Ellipse
+            ctx.strokeStyle = '#ffffff'; // Solid high-contrast white path
             ctx.lineWidth = 2.5;
-            ctx.setLineDash([]); // Reset to solid line
+            ctx.setLineDash([]); 
             ctx.beginPath();
             ctx.ellipse(centerX, centerY, a, b, 0, 0, 2 * Math.PI);
             ctx.stroke();
 
-            // 4. Mark Focus Point (ae, 0)
+            // 4. Highlight Orbital Focus Vector Point (ae, 0)
             const focusX = centerX + (a * e);
-            ctx.fillStyle = '#ff453a';
+            ctx.fillStyle = '#ff453a'; // Bright iOS Red
             ctx.beginPath();
             ctx.arc(focusX, centerY, 5, 0, 2 * Math.PI);
             ctx.fill();
-            // Focus Label Text
+            
             ctx.fillStyle = '#ff453a';
             ctx.font = '12px sans-serif';
-            ctx.fillText('Focus (Star)', focusX - 30, centerY + 20);
+            ctx.fillText('Focus (Star)', focusX - 30, centerY + 22);
 
-            // Canvas coordinates (Invert Y because canvas Y points downwards)
+            // Translate matrix offsets for inverted canvas space
             const cx = centerX + x;
             const cyCircle = centerY - yCircle;
             const cyEllipse = centerY - yEllipse;
 
-            // 5. Draw vertical tracking line from P' down to X-axis
-            ctx.strokeStyle = '#0071e3';
+            // 5. Draw Transverse Linear Grid Line from P' to X-axis
+            ctx.strokeStyle = '#0a84ff';
             ctx.lineWidth = 1.2;
             ctx.setLineDash([3, 3]);
             ctx.beginPath();
@@ -234,8 +255,8 @@ cat << 'EOF' > index.html
             ctx.lineTo(cx, centerY);
             ctx.stroke();
 
-            // 6. Draw Vector Line from Center to P' on the circle
-            ctx.strokeStyle = '#34c759';
+            // 6. Draw Angular Vector Projection line to P'
+            ctx.strokeStyle = '#30d158'; // Radiant green line
             ctx.lineWidth = 2;
             ctx.setLineDash([]);
             ctx.beginPath();
@@ -243,46 +264,44 @@ cat << 'EOF' > index.html
             ctx.lineTo(cx, cyCircle);
             ctx.stroke();
 
-            // 7. Draw Angle E arc indicator
+            // 7. Render True Angle Arc Indicator
             if (E_deg > 0) {
-                ctx.strokeStyle = '#34c759';
+                ctx.strokeStyle = '#30d158';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                // Canvas arcs are drawn clockwise, so we sweep from 0 to -E_rad
                 ctx.arc(centerX, centerY, 30, 0, -E_rad, true);
                 ctx.stroke();
                 
-                // Label for angle E near the arc center
-                ctx.fillStyle = '#34c759';
+                ctx.fillStyle = '#30d158';
                 ctx.font = 'italic 14px sans-serif';
                 ctx.fillText('E', centerX + 35 * Math.cos(-E_rad/2), centerY - 35 * Math.sin(-E_rad/2));
             }
 
-            // 8. Draw Point P' (On Auxiliary Circle)
-            ctx.fillStyle = '#34c759';
+            // 8. Plot Tracking Node P' (Circular Bound Node)
+            ctx.fillStyle = '#30d158';
             ctx.beginPath();
             ctx.arc(cx, cyCircle, 5, 0, 2 * Math.PI);
             ctx.fill();
-            ctx.fillStyle = '#1d1d1f';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '12px sans-serif';
             ctx.fillText("P' (Circle)", cx + 8, cyCircle - 5);
 
-            // 9. Draw Point P (Actual Object on Ellipse)
-            ctx.fillStyle = '#0071e3';
+            // 9. Plot Physical Path Target P (Actual Target Coordinates)
+            ctx.fillStyle = '#0a84ff';
             ctx.beginPath();
             ctx.arc(cx, cyEllipse, 6, 0, 2 * Math.PI);
             ctx.fill();
-            ctx.fillStyle = '#0071e3';
+            ctx.fillStyle = '#0a84ff';
             ctx.font = 'bold 12px sans-serif';
             ctx.fillText('P (Planet)', cx + 10, cyEllipse + 4);
         }
 
-        // Event listeners to handle real-time modifications
+        // Event hooks to handle mutations natively
         eSlider.addEventListener('input', draw);
         ESlider.addEventListener('input', draw);
 
-        // Initial launch render
+        // Core initialization draw call
         draw();
     </script>
 </body>
 </html>
-EOF
