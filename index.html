@@ -13,24 +13,25 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 15px;
             margin: 0;
+            box-sizing: border-box;
         }
 
         h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             margin-bottom: 5px;
             text-align: center;
             color: #ffffff;
         }
 
         p.subtitle {
-            color: #8e8e93; /* Subtle gray for dark mode subheadings */
+            color: #8e8e93; 
             margin-top: 0;
             margin-bottom: 20px;
             text-align: center;
             max-width: 600px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             line-height: 1.4;
         }
 
@@ -38,7 +39,7 @@
             background-color: #2c2c2e; /* Dark surface container background */
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -47,55 +48,16 @@
             box-sizing: border-box;
         }
 
-        canvas {
-            background-color: #121212; /* Rich dark background for the diagram */
-            border: 1px solid #3a3a3c;
-            border-radius: 8px;
-            max-width: 100%;
-            height: auto;
-        }
-
-        .controls {
-            width: 100%;
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .label-container {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 500;
-            font-size: 0.95rem;
-            align-items: center;
-            color: #f5f5f7;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            accent-color: #0a84ff; /* High-contrast dark mode blue accent */
-            cursor: pointer;
-            background-color: #3a3a3c;
-            height: 6px;
-            border-radius: 3px;
-        }
-
+        /* Live Data/Metrics Matrix positioned at the TOP */
         .stats {
             width: 100%;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #3a3a3c;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #3a3a3c;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .stat-box {
@@ -104,6 +66,9 @@
             border-radius: 6px;
             border: 1px solid #3a3a3c;
             color: #e5e5ea;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .stat-box span {
@@ -111,6 +76,50 @@
             color: #0a84ff; /* Electric blue readout values */
         }
 
+        canvas {
+            background-color: #121212; /* Rich dark background for the diagram */
+            border: 1px solid #3a3a3c;
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Control Sliders Matrix positioned at the BOTTOM */
+        .controls {
+            width: 100%;
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .label-container {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            font-size: 0.9rem;
+            align-items: center;
+            color: #f5f5f7;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #0a84ff; 
+            cursor: pointer;
+            background-color: #3a3a3c;
+            height: 8px; /* Slightly thicker line for easier mobile touch manipulation */
+            border-radius: 4px;
+            margin: 4px 0;
+        }
+
+        /* Personal Attribution Footer with Clickable LinkedIn Link */
         .footer {
             margin-top: 25px;
             font-size: 0.85rem;
@@ -119,9 +128,33 @@
             letter-spacing: 0.3px;
         }
         
-        .footer span {
+        .footer a {
             color: #0a84ff;
             font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer a:hover {
+            color: #5ac8fa;
+            text-decoration: underline;
+        }
+
+        /* Mobile Optimization Media Queries */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.4rem;
+            }
+            p.subtitle {
+                font-size: 0.85rem;
+            }
+            .stats {
+                grid-template-columns: 1fr; /* Stack telemetry to 1 column on narrow screens */
+                gap: 6px;
+            }
+            .container {
+                padding: 10px;
+            }
         }
     </style>
 </head>
@@ -131,6 +164,13 @@
     <p class="subtitle">Visualizing the mathematical bridge between an ellipse and its auxiliary circle where \(x = a \cos E\) and \(y = b \sin E\)</p>
 
     <div class="container">
+        <div class="stats">
+            <div class="stat-box">Semi-major Axis (\(a\)): <span>180 px</span></div>
+            <div class="stat-box">Semi-minor Axis (\(b\)): <span id="statB">144.0 px</span></div>
+            <div class="stat-box">\(P'\) (Circle Coords): <span id="statPPrime">(90.0, 155.9)</span></div>
+            <div class="stat-box">\(P\) (Ellipse Coords): <span id="statP">(90.0, 124.7)</span></div>
+        </div>
+
         <canvas id="orbitCanvas" width="600" height="450"></canvas>
 
         <div class="controls">
@@ -150,16 +190,9 @@
                 <input type="range" id="anomaly" min="0" max="360" step="1" value="60">
             </div>
         </div>
-
-        <div class="stats">
-            <div class="stat-box">Semi-major Axis (\(a\)): <span>180 px</span></div>
-            <div class="stat-box">Semi-minor Axis (\(b\)): <span id="statB">144.0 px</span></div>
-            <div class="stat-box">\(P'\) (Circle Coords): <span id="statPPrime">(90.0, 155.9)</span></div>
-            <div class="stat-box">\(P\) (Ellipse Coords): <span id="statP">(90.0, 124.7)</span></div>
-        </div>
     </div>
 
-    <div class="footer">Made by <span>Rajarshi Das Gupta</span></div>
+    <div class="footer">Made by <a href="https://www.linkedin.com/in/rajarshidgupta/" target="_blank" rel="noopener noreferrer">Rajarshi Das Gupta</a></div>
 
     <script>
         const canvas = document.getElementById('orbitCanvas');
@@ -175,7 +208,7 @@
         const statPPrime = document.getElementById('statPPrime');
         const statP = document.getElementById('statP');
 
-        // Fixed spatial coordinate bounds
+        // Fixed spatial coordinate geometry limits
         const a = 180; 
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
@@ -205,7 +238,7 @@
             // Reset canvas frame
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Draw Axis Crosshairs (Dark Theme Compliant muted color)
+            // 1. Draw Axis Crosshairs (Muted slate gray for dark mode grid balance)
             ctx.strokeStyle = '#3a3a3c';
             ctx.lineWidth = 1;
             ctx.setLineDash([]);
@@ -222,7 +255,7 @@
             ctx.arc(centerX, centerY, a, 0, 2 * Math.PI);
             ctx.stroke();
 
-            // 3. Draw Keplerian Ellipse
+            // 3. Draw Keplerian Ellipse Track
             ctx.strokeStyle = '#ffffff'; // Solid high-contrast white path
             ctx.lineWidth = 2.5;
             ctx.setLineDash([]); 
@@ -230,9 +263,9 @@
             ctx.ellipse(centerX, centerY, a, b, 0, 0, 2 * Math.PI);
             ctx.stroke();
 
-            // 4. Highlight Orbital Focus Vector Point (ae, 0)
+            // 4. Highlight Orbital Focus Point (ae, 0)
             const focusX = centerX + (a * e);
-            ctx.fillStyle = '#ff453a'; // Bright iOS Red
+            ctx.fillStyle = '#ff453a'; // Vibrant system red
             ctx.beginPath();
             ctx.arc(focusX, centerY, 5, 0, 2 * Math.PI);
             ctx.fill();
@@ -241,12 +274,12 @@
             ctx.font = '12px sans-serif';
             ctx.fillText('Focus (Star)', focusX - 30, centerY + 22);
 
-            // Translate matrix offsets for inverted canvas space
+            // Translate matrix offsets for canvas inversion plane
             const cx = centerX + x;
             const cyCircle = centerY - yCircle;
             const cyEllipse = centerY - yEllipse;
 
-            // 5. Draw Transverse Linear Grid Line from P' to X-axis
+            // 5. Draw Transverse Tracking Line from P' down to X-axis
             ctx.strokeStyle = '#0a84ff';
             ctx.lineWidth = 1.2;
             ctx.setLineDash([3, 3]);
@@ -255,8 +288,8 @@
             ctx.lineTo(cx, centerY);
             ctx.stroke();
 
-            // 6. Draw Angular Vector Projection line to P'
-            ctx.strokeStyle = '#30d158'; // Radiant green line
+            // 6. Draw Angular Projection Vector line to P'
+            ctx.strokeStyle = '#30d158'; // Radiant system green
             ctx.lineWidth = 2;
             ctx.setLineDash([]);
             ctx.beginPath();
@@ -277,7 +310,7 @@
                 ctx.fillText('E', centerX + 35 * Math.cos(-E_rad/2), centerY - 35 * Math.sin(-E_rad/2));
             }
 
-            // 8. Plot Tracking Node P' (Circular Bound Node)
+            // 8. Plot Tracking Node P' (Circular Bound Reference Node)
             ctx.fillStyle = '#30d158';
             ctx.beginPath();
             ctx.arc(cx, cyCircle, 5, 0, 2 * Math.PI);
@@ -286,7 +319,7 @@
             ctx.font = '12px sans-serif';
             ctx.fillText("P' (Circle)", cx + 8, cyCircle - 5);
 
-            // 9. Plot Physical Path Target P (Actual Target Coordinates)
+            // 9. Plot Physical Path Target P (Actual Elliptical Coordinates Node)
             ctx.fillStyle = '#0a84ff';
             ctx.beginPath();
             ctx.arc(cx, cyEllipse, 6, 0, 2 * Math.PI);
@@ -296,7 +329,7 @@
             ctx.fillText('P (Planet)', cx + 10, cyEllipse + 4);
         }
 
-        // Event hooks to handle mutations natively
+        // Event hooks to handle range modifications natively
         eSlider.addEventListener('input', draw);
         ESlider.addEventListener('input', draw);
 
